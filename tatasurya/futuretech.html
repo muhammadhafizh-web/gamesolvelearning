@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teknologi Masa Depan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a2e;
+            color: white;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #16213e;
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #0f3460;
+        }
+
+        #problem-area {
+            background-color: #e94560;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 40px;
+        }
+
+        #inventory {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #0f3460;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .component {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #a9a9a9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: grab;
+            background-color: #1f4068;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+
+        .component.dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+        }
+
+        #design-area {
+            width: 300px;
+            height: 250px;
+            border: 3px solid #533483;
+            border-radius: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            align-content: flex-start;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        #check-button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            background-color: #16c79a;
+            color: white;
+            border-radius: 10px;
+        }
+
+        /* Kontainer untuk animasi (awalnya disembunyikan) */
+        #animation-container {
+            display: none;
+            text-align: center;
+        }
+        
+        #animation-container img {
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="problem-area">
+            <h3>MASALAH: Krisis Energi Global!</h3>
+            <p>Rotasi Bumi melambat, menyebabkan malam lebih panjang. Rancang teknologi untuk menyediakan energi bersih dari luar angkasa.</p>
+        </div>
+
+        <div class="main-content">
+            <div id="inventory">
+                <div id="satelit" class="component" draggable="true">🛰️<br>Satelit Komunikasi</div>
+                <div id="panel-surya" class="component" draggable="true">☀️<br>Panel Surya Ruang Angkasa</div>
+                <div id="sensor-iklim" class="component" draggable="true">🌡️<br>Sensor Iklim</div>
+            </div>
+            <div id="design-area">
+                </div>
+        </div>
+
+        <button id="check-button">Aktifkan Teknologi</button>
+    </div>
+
+    <div id="animation-container">
+        <h2>DESAIN LOGIS! TEKNOLOGI DIAKTIFKAN!</h2>
+        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd245dW9qam1xNnM0aDJ1OXE1aDNzZTF2NDF0b2Z0eXQ3NGM0dHR1ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LqmMj2fI6a8EhbtI24/giphy.gif" alt="Animasi Teknologi Berfungsi">
+        <p>Satelit mentransmisikan energi dari Panel Surya di luar angkasa kembali ke Bumi!</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const components = document.querySelectorAll('.component');
+            const designArea = document.getElementById('design-area');
+            const checkButton = document.getElementById('check-button');
+            const gameContainer = document.getElementById('game-container');
+            const animationContainer = document.getElementById('animation-container');
+
+            // === LOGIKA DRAG & DROP ===
+
+            // Saat komponen mulai digeser
+            components.forEach(component => {
+                component.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.id);
+                    setTimeout(() => {
+                        e.target.classList.add('dragging');
+                    }, 0);
+                });
+
+                // Saat komponen selesai digeser
+                component.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                });
+            });
+
+            // Saat komponen berada di atas area desain
+            designArea.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Wajib untuk mengizinkan drop
+            });
+
+            // Saat komponen dilepaskan di area desain
+            designArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData('text');
+                const draggableElement = document.getElementById(id);
+                if (draggableElement) {
+                    designArea.appendChild(draggableElement);
+                }
+            });
+
+            // === LOGIKA PENGECEKAN DESAIN ===
+
+            checkButton.addEventListener('click', () => {
+                // Tentukan "resep" yang benar untuk masalah ini
+                const correctCombination = ['satelit', 'panel-surya'];
+
+                // Ambil semua komponen yang ada di area desain
+                const droppedComponents = designArea.querySelectorAll('.component');
+                const droppedIds = Array.from(droppedComponents).map(comp => comp.id).sort();
+
+                // Cek apakah kombinasinya benar
+                if (droppedIds.length === correctCombination.length && droppedIds.every((id, index) => id === correctCombination.sort()[index])) {
+                    // Jika Benar
+                    gameContainer.style.display = 'none';
+                    animationContainer.style.display = 'block';
+                } else {
+                    // Jika Salah
+                    alert("Kombinasi tidak logis. Coba rancang ulang!");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Rotasi & Revolusi</title>
+    
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('musimsiangmalam.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .game-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #phenomenon-image img {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        button, .button-link {
+            padding: 15px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            background-color: #4a90e2;
+            color: white;
+            text-decoration: none; /* Untuk <a> agar mirip tombol */
+            display: inline-block;
+        }
+
+        button:hover, .button-link:hover {
+            transform: scale(1.05);
+            background-color: #357abd;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 10px;
+            position: relative;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: scale(0.9);}
+            to {opacity: 1; transform: scale(1);}
+        }
+
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* CSS BARU UNTUK TOMBOL LANJUT */
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Fenomena Alam Apa Ini?</h1>
+        <div id="phenomenon-image"></div>
+        <p id="question-text">Penyebab utama dari fenomena di atas adalah...</p>
+        
+        <div class="buttons">
+            <button id="rotation-btn">Rotasi Bumi 🌍🔄</button>
+            <button id="revolution-btn">Revolusi Bumi 🌍☀️</button>
+        </div>
+    </div>
+
+    <div id="correct-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Hebat, Jawabanmu Benar! 🎉</h2>
+            <button id="next-question-btn">Lanjut</button>
+        </div>
+    </div>
+
+    <div id="incorrect-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Oops, Coba Lagi! 🤔</h2>
+            <p id="incorrect-explanation"></p>
+            <button id="try-again-btn">Kembali</button>
+        </div>
+    </div>
+
+    <div id="final-score-modal" class="modal">
+        <div class="modal-content">
+            <h2>Permainan Selesai!</h2>
+            <p id="final-score-text" style="font-size: 1.2em; font-weight: bold;"></p>
+            <div class="modal-footer">
+                <a href="gamesimulasi.html" class="button-link">Lanjut</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const questions = [
+                {
+                    image: 'siangmalam.jpg',
+                    correctAnswer: 'rotation',
+                    explanation: 'Siang dan malam terjadi karena **Rotasi Bumi**, yaitu perputaran Bumi pada porosnya.'
+                },
+                {
+                    image: 'perubahanmusim.jpg',
+                    correctAnswer: 'revolution',
+                    explanation: 'Pergantian musim terjadi karena **Revolusi Bumi**, yaitu saat Bumi mengelilingi Matahari pada sumbu yang miring.'
+                },
+                {
+                    image: 'sisibumi.jpg',
+                    correctAnswer: 'rotation',
+                    explanation: 'Sisi Bumi yang tidak terkena sinar Matahari akan mengalami malam. Ini adalah akibat dari **Rotasi Bumi**.'
+                }
+            ];
+
+            // === PERUBAHAN 1: Variabel baru untuk skor ===
+            let currentQuestionIndex = 0;
+            let correctAnswersCount = 0;
+
+            const phenomenonImage = document.getElementById('phenomenon-image');
+            const rotationBtn = document.getElementById('rotation-btn');
+            const revolutionBtn = document.getElementById('revolution-btn');
+
+            const correctModal = document.getElementById('correct-modal');
+            const incorrectModal = document.getElementById('incorrect-modal');
+            const incorrectExplanation = document.getElementById('incorrect-explanation');
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            const tryAgainBtn = document.getElementById('try-again-btn');
+            const closeBtns = document.querySelectorAll('.close-btn');
+            
+            // Ambil elemen modal skor akhir
+            const finalScoreModal = document.getElementById('final-score-modal');
+            const finalScoreText = document.getElementById('final-score-text');
+
+            function showQuestion(index) {
+                const question = questions[index];
+                phenomenonImage.innerHTML = `<img src="${question.image}" alt="Fenomena Alam">`;
+            }
+
+            // === PERUBAHAN 2: Fungsi checkAnswer diupdate untuk menghitung skor ===
+            function checkAnswer(userChoice) {
+                const currentQuestion = questions[currentQuestionIndex];
+                if (userChoice === currentQuestion.correctAnswer) {
+                    correctAnswersCount++; // Tambah skor jika benar
+                    // Cek apakah ini pertanyaan terakhir
+                    if (currentQuestionIndex >= questions.length - 1) {
+                        showFinalScore();
+                    } else {
+                        correctModal.style.display = 'flex';
+                    }
+                } else {
+                    incorrectExplanation.innerHTML = currentQuestion.explanation;
+                    incorrectModal.style.display = 'flex';
+                }
+            }
+            
+            function hideModals() {
+                correctModal.style.display = 'none';
+                incorrectModal.style.display = 'none';
+            }
+
+            // === PERUBAHAN 3: Fungsi baru untuk menampilkan skor akhir ===
+            function showFinalScore() {
+                const totalQuestions = questions.length;
+                let message = '';
+
+                if (correctAnswersCount === totalQuestions) {
+                    message = "Horee.. kamu dapat 100";
+                } else if (correctAnswersCount > 0) {
+                    message = "Lumayan.. kamu dapat 70";
+                } else {
+                    message = "Ayoo semangat.. kamu dapat 30";
+                }
+
+                finalScoreText.textContent = message;
+                finalScoreModal.style.display = 'flex';
+            }
+
+            rotationBtn.addEventListener('click', () => checkAnswer('rotation'));
+            revolutionBtn.addEventListener('click', () => checkAnswer('revolution'));
+            
+            // === PERUBAHAN 4: Logika Tombol Lanjut/Next diubah ===
+            nextQuestionBtn.addEventListener('click', () => {
+                hideModals();
+                currentQuestionIndex++; // Langsung ke soal berikutnya
+                showQuestion(currentQuestionIndex);
+            });
+
+            tryAgainBtn.addEventListener('click', () => {
+                 hideModals();
+                 // Cek apakah ini pertanyaan terakhir setelah jawaban salah
+                 if (currentQuestionIndex >= questions.length - 1) {
+                    showFinalScore();
+                 } else {
+                    currentQuestionIndex++;
+                    showQuestion(currentQuestionIndex);
+                 }
+            });
+            
+            closeBtns.forEach(btn => {
+                btn.addEventListener('click', hideModals);
+            });
+
+            showQuestion(currentQuestionIndex);
+        });
+    </script>
+</body>
+</html>

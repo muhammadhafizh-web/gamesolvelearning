@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drag & Drop Objek</title>
+<button id="instruksiBtn">Instruksi Penggunaan</button>
+
+<!-- Popup Instruksi -->
+<div id="instruksiPopup" class="popup">
+  <div class="popup-content">
+    <h3>Instruksi Penggunaan</h3>
+    <ol style="text-align:left; font-size:16px; line-height:1.6;">
+      <li>Tarik dan Lepas bahan/alat konduktor/isolator yang ada kemudian masukkan kedalam toolbox.</li>
+      <li>Klik tombol <b>Hint</b> pada bagian kanan atas, untuk menemukan clue dimana letak bahan/alat.</li>
+      <li>Bahan/alat akan bersinar ketika tombol <b>Hint</b> ditekan.</li>
+      <li>Jika semua bahan dan alat telah masuk, maka akan muncul halaman berikutnya.</li>
+    </ol>
+    <button onclick="tutupInstruksi()">Tutup</button>
+  </div>
+</div>
+
+<style>
+  #instruksiBtn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background: #673ab7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 1000;
+  }
+  #instruksiBtn:hover {
+    background: #4527a0;
+  }
+</style>
+
+<script>
+  const instruksiBtn = document.getElementById('instruksiBtn');
+  const instruksiPopup = document.getElementById('instruksiPopup');
+
+  instruksiBtn.addEventListener('click', () => {
+    instruksiPopup.style.display = 'flex';
+  });
+
+  function tutupInstruksi() {
+    instruksiPopup.style.display = 'none';
+  }
+</script>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    font-family: Arial, sans-serif;
+    background-image: url('bg-workshop.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .draggable {
+    position: absolute;
+    cursor: grab;
+    width: 120px;
+    height: 120px;
+  }
+
+  .toolbox {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border: 2px dashed transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: move;
+    background: rgba(255, 255, 255, 0);
+    flex-direction: column;
+  }
+  .toolbox img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .label {
+    position: absolute;
+    top: -30px;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+    text-shadow: 1px 1px 3px black;
+    pointer-events: none;
+  }
+
+  /* Notifikasi sukses */
+  #notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background-color: #4caf50;
+    color: white;
+    padding: 20px 35px;
+    border-radius: 8px;
+    font-size: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    z-index: 1000;
+  }
+  #notification.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* Efek flash toolbox */
+  .toolbox.flash {
+    animation: flash 0.5s;
+  }
+  @keyframes flash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.5); }
+  }
+
+  /* Popup misi berikutnya & gagal */
+  .popup {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  .popup-content {
+    background: white;
+    padding: 30px 50px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 20px;
+    max-width: 400px;
+  }
+  .popup-content button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    background: #2196f3;
+    color: white;
+    cursor: pointer;
+  }
+  .popup-content button:hover {
+    background: #1976d2;
+  }
+  .popup-content.error {
+    background: #ffebee;
+    border: 2px solid #f44336;
+    color: #c62828;
+  }
+
+  /* Kedip untuk hint */
+  .highlight {
+    animation: blink 1s linear infinite;
+  }
+  @keyframes blink {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(2); }
+  }
+
+  /* Tombol hint */
+  #hintBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background: orange;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+
+<!-- Tombol Hint -->
+<button id="hintBtn">Hint</button>
+
+<!-- Objek draggable -->
+<img src="bolalampu.png" id="objek1" class="draggable" draggable="true">
+<img src="electriccable.png" id="objek2" class="draggable" draggable="true">
+<img src="socket2.png" id="objek3" class="draggable" draggable="true">
+<img src="battery.png" id="objek5" class="draggable" draggable="true">
+<img src="kabellistrik.png" id="objek6" class="draggable" draggable="true">
+<img src="kabellistrik1.png" id="objek7" class="draggable" draggable="true">
+<img src="switch.png" id="objek8" class="draggable" draggable="true">
+
+<img src="kayu.png" id="objek9" class="draggable" draggable="true">
+<img src="tape.png" id="objek10" class="draggable" draggable="true">
+<img src="pvc.png" id="objek11" class="draggable" draggable="true">
+
+<!-- Toolbox Konduktor -->
+<div id="toolbox1" class="toolbox" style="left: 20%; bottom: 20px; transform: translateX(-50%);">
+  <div class="label">Toolbox Konduktor</div>
+  <img src="emptytoolbox.png" alt="Tool Box">
+</div>
+
+<!-- Toolbox Isolator -->
+<div id="toolbox2" class="toolbox" style="left: 80%; bottom: 20px; transform: translateX(-50%);">
+  <div class="label">Toolbox Isolator</div>
+  <img src="emptytoolbox.png" alt="Tool Box">
+</div>
+
+<div id="notification">Berhasil Memasukkan Alat</div>
+
+<!-- Popup misi berikutnya -->
+<div id="nextMissionPopup" class="popup">
+  <div class="popup-content">
+    <p>Semua alat berhasil dimasukkan!</p>
+    <button onclick="lanjutMisi()">Lanjut ke Misi Berikutnya</button>
+  </div>
+</div>
+
+<!-- Popup gagal -->
+<div id="failPopup" class="popup">
+  <div class="popup-content error">
+    <p id="failMessage">Alat salah dimasukkan!</p>
+    <button onclick="tutupFail()">Tutup</button>
+  </div>
+</div>
+
+<script>
+  const draggables = document.querySelectorAll('.draggable');
+  const toolboxes = document.querySelectorAll('.toolbox');
+  const notification = document.getElementById('notification');
+  const popup = document.getElementById('nextMissionPopup');
+  const failPopup = document.getElementById('failPopup');
+  const failMessage = document.getElementById('failMessage');
+  const hintBtn = document.getElementById('hintBtn');
+
+  const toolbox1Allowed = ["objek1","objek2","objek3","objek5","objek6","objek7","objek8"]; // konduktor
+  const toolbox2Allowed = ["objek9","objek10","objek11"]; // isolator
+
+  let totalObjects = draggables.length;
+  let correctObjects = 0;
+
+  // Tempatkan objek acak
+  draggables.forEach(el => {
+    const x = Math.random() * (window.innerWidth - 150);
+    const y = Math.random() * (window.innerHeight - 200);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  });
+
+  // Drag start
+  draggables.forEach(el => {
+    el.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', e.target.id);
+    });
+  });
+
+  // Drop ke toolbox
+  toolboxes.forEach(box => {
+    box.addEventListener('dragover', (e) => e.preventDefault());
+
+    box.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain');
+      const draggedEl = document.getElementById(id);
+
+      if(!draggedEl) return;
+
+      if(box.id === "toolbox1" && toolbox1Allowed.includes(id)) {
+        draggedEl.remove();
+        correctDrop(box);
+      } 
+      else if(box.id === "toolbox2" && toolbox2Allowed.includes(id)) {
+        draggedEl.remove();
+        correctDrop(box);
+      } 
+      else {
+        if(box.id === "toolbox1") {
+          failMessage.textContent = "Alat Tidak Termasuk Konduktor";
+        } else {
+          failMessage.textContent = "Alat Tidak Termasuk Isolator";
+        }
+        failPopup.style.display = "flex";
+      }
+    });
+  });
+
+  function correctDrop(box) {
+    box.classList.add('flash');
+    setTimeout(() => box.classList.remove('flash'), 500);
+    showNotification();
+
+    correctObjects++;
+    if (correctObjects === totalObjects) {
+      setTimeout(() => {
+        popup.style.display = 'flex';
+      }, 800);
+    }
+  }
+
+  function showNotification() {
+    notification.classList.add('show');
+    setTimeout(() => {
+      notification.classList.remove('show');
+    }, 1500);
+  }
+
+  function tutupFail() {
+    failPopup.style.display = "none";
+  }
+
+  function lanjutMisi() {
+    alert("Menuju misi berikutnya...");
+    window.location.href = "misi3.html";
+  }
+
+  // Membuat toolbox bisa dipindahkan
+  toolboxes.forEach(box => {
+    let offsetX, offsetY, isDragging = false;
+
+    box.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      const rect = box.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      box.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        let x = e.clientX - offsetX;
+        let y = e.clientY - offsetY;
+
+        x = Math.max(0, Math.min(window.innerWidth - box.offsetWidth, x));
+        y = Math.max(0, Math.min(window.innerHeight - box.offsetHeight, y));
+
+        box.style.left = x + 'px';
+        box.style.top = y + 'px';
+        box.style.bottom = 'auto';
+        box.style.transform = 'none';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      box.style.cursor = 'move';
+    });
+  });
+
+  // Hint: highlight semua objek yang belum dimasukkan
+  hintBtn.addEventListener('click', () => {
+    draggables.forEach(el => {
+      if (document.body.contains(el)) { // masih ada di layar
+        el.classList.add('highlight');
+        setTimeout(() => el.classList.remove('highlight'), 2000);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

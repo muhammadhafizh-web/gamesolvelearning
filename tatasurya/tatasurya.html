@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Permainan Mengurutkan Planet — Pengenalan Tata Surya</title>
+  <style>
+    :root{--bg:#0b1020;--card:#0f1724;--accent:#60a5fa;--ok:#34d399;--bad:#fb7185}
+    *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#07101a 0%, #0b1730 100%);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:28px}
+    .wrap{width:100%;max-width:920px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:#cfe6ff80;font-size:13px}
+
+    .board{display:grid;grid-template-columns:1fr 300px;gap:18px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{background:var(--accent);border:none;color:#07203a;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+    button.warn{background:var(--bad);color:white}
+
+    ol.planet-list{list-style:none;padding:12px;margin:0;display:flex;flex-direction:column;gap:8px}
+    li.planet{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);cursor:grab}
+    li.planet[aria-grabbed="true"]{opacity:0.7}
+    .planet-handle{width:44px;height:44px;border-radius:50%;flex:0 0 44px;background-size:cover;background-position:center;background-repeat:no-repeat;color:transparent}
+
+    /* planet images */
+    .mercury{background-image:url("merkurius.png")}
+    .venus{background-image:url("venus.png")}
+    .earth{background-image:url("bumi.png")}
+    .mars{background-image:url("mars.png")}
+    .jupiter{background-image:url("jupiter.png")}
+    .saturn{background-image:url("saturnus.png")}
+    .uranus{background-image:url("uranus.png")}
+    .neptune{background-image:url("neptunus.png")}
+    .sun{background-image:url("matahari.png")}
+
+    .planet-name{font-weight:700}
+    .planet-sub{font-size:12px;color:#cfe6ff88}
+
+    .result{margin-top:12px;font-weight:700}
+    .correct{color:var(--ok)}
+    .incorrect{color:var(--bad)}
+
+    /* Popup */
+    .popup {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .popup.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .popup-content {
+      background: var(--card);
+      padding: 24px 32px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      max-width: 360px;
+    }
+    .popup-content h2 {
+      margin: 0 0 16px;
+      color: var(--ok);
+    }
+    .popup-content a {
+      display: inline-block;
+      margin-top: 16px;
+      background: var(--ok);
+      color: #07101a;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    /* responsive */
+    @media (max-width:880px){.board{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Susun Planet — Urutkan dari Matahari</h1>
+        <p class="lead">Tarik dan lepas untuk menyusun planet dari yang paling dekat ke Matahari sampai yang paling jauh.</p>
+      </div>
+      <div class="controls">
+        <button id="shuffleBtn">Acak</button>
+        <button id="checkBtn">Periksa</button>
+        <button id="resetBtn" class="ghost">Reset</button>
+      </div>
+    </header>
+
+    <main class="board">
+      <section class="card">
+        <p style="margin:0 0 8px 0;color:#cfe6ffb0">Susun ulang daftar di bawah ini sehingga berurut dari yang paling dekat ke Matahari.</p>
+        
+        <!-- matahari statis -->
+        <div style="display:flex;align-items:center;gap:12px;margin:0 0 12px 0;padding:10px;background:rgba(255,255,255,0.02);border-radius:10px">
+          <div class="planet-handle sun"></div>
+          <div>
+            <div class="planet-name">Matahari</div>
+            <div class="planet-sub">Sun</div>
+          </div>
+        </div>
+
+        <ol id="planetList" class="planet-list" aria-label="Daftar planet" role="list">
+          <!-- items via JS -->
+        </ol>
+        <div class="result" id="result"></div>
+      </section>
+
+      <aside class="card">
+        <h3 style="margin-top:0">Petunjuk & Fitur</h3>
+        <ul style="color:#cfe6ffb0">
+          <li>Tarik (drag) item untuk memindahkan.</li>
+          <li>Tombol <strong>Acak</strong> mengacak urutan untuk memulai.</li>
+          <li>Tombol <strong>Periksa</strong> memberi tahu mana yang benar/keliru.</li>
+          <li>Anda dapat memilih item dan gunakan tombol panah Atas/Bawah untuk memindahkannya (aksesibilitas keyboard).</li>
+        </ul>
+        <hr style="opacity:0.06;margin:12px 0">
+        <div>
+          <strong>Planet:</strong>
+          <p style="margin:6px 0 0 0;color:#cfe6ff88">Merkurius, Venus, Bumi, Mars, Jupiter, Saturnus, Uranus, Neptunus (8 planet)</p>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Popup sukses -->
+  <div class="popup" id="successPopup">
+    <div class="popup-content">
+      <h2>Horee.... BERHASIL 🎉</h2>
+      <p>Semua planet sudah diurutkan dengan benar!</p>
+      <a href="rotasirevolusi.html">Lanjut ➡</a>
+    </div>
+  </div>
+
+  <script>
+    const CORRECT = [
+      {id:'mercury', name:'Merkurius', en:'Mercury'},
+      {id:'venus', name:'Venus', en:'Venus'},
+      {id:'earth', name:'Bumi', en:'Earth'},
+      {id:'mars', name:'Mars', en:'Mars'},
+      {id:'jupiter', name:'Jupiter', en:'Jupiter'},
+      {id:'saturn', name:'Saturnus', en:'Saturn'},
+      {id:'uranus', name:'Uranus', en:'Uranus'},
+      {id:'neptune', name:'Neptunus', en:'Neptune'}
+    ];
+
+    const listEl = document.getElementById('planetList');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultEl = document.getElementById('result');
+    const popup = document.getElementById('successPopup');
+
+    function createList(items){
+      listEl.innerHTML = '';
+      items.forEach((p) => {
+        const li = document.createElement('li');
+        li.className = 'planet';
+        li.draggable = true;
+        li.setAttribute('data-id', p.id);
+        li.setAttribute('tabindex', 0);
+        li.setAttribute('role', 'listitem');
+
+        li.innerHTML = `
+          <div class="planet-handle ${p.id}" aria-hidden="true"></div>
+          <div>
+            <div class="planet-name">${p.name}</div>
+            <div class="planet-sub">${p.en}</div>
+          </div>
+        `;
+
+        li.addEventListener('dragstart', onDragStart);
+        li.addEventListener('dragover', onDragOver);
+        li.addEventListener('drop', onDrop);
+        li.addEventListener('dragend', onDragEnd);
+
+        li.addEventListener('keydown', (e) => {
+          if(e.key === 'ArrowUp') moveNode(li, -1);
+          if(e.key === 'ArrowDown') moveNode(li, 1);
+          if(e.key === ' ' || e.key === 'Enter') { 
+            e.preventDefault();
+            const grabbed = li.getAttribute('aria-grabbed') === 'true';
+            li.setAttribute('aria-grabbed', String(!grabbed));
+          }
+        });
+
+        listEl.appendChild(li);
+      });
+      updateHandles();
+    }
+
+    let dragSrc = null;
+    function onDragStart(e){
+      dragSrc = this;
+      this.style.opacity = '0.6';
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.getAttribute('data-id'));
+    }
+    function onDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+    function onDrop(e){
+      e.preventDefault();
+      if(dragSrc === this) return;
+      const a = dragSrc;
+      const b = this;
+      const parent = a.parentNode;
+      const aNext = a.nextSibling === b ? a : a.nextSibling;
+      parent.insertBefore(a, b);
+      parent.insertBefore(b, aNext);
+      updateHandles();
+    }
+    function onDragEnd(){ this.style.opacity = ''; dragSrc = null; }
+
+    function moveNode(node, offset){
+      const items = Array.from(listEl.children);
+      const idx = items.indexOf(node);
+      const newIdx = idx + offset;
+      if(newIdx < 0 || newIdx >= items.length) return;
+      const ref = items[newIdx];
+      if(offset > 0) listEl.insertBefore(ref, node);
+      else listEl.insertBefore(node, ref);
+      node.focus();
+      updateHandles();
+    }
+
+    function updateHandles(){
+      Array.from(listEl.children).forEach((li) => {
+        li.classList.remove('correct','incorrect');
+      });
+    }
+
+    function shuffle(a){
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    }
+
+    function start(){
+      const items = shuffle(CORRECT.slice());
+      createList(items);
+      resultEl.textContent = '';
+      popup.classList.remove('active');
+    }
+
+    function check(){
+      const items = Array.from(listEl.children).map(li => li.getAttribute('data-id'));
+      let correctCount = 0;
+      items.forEach((id, idx) => {
+        const li = listEl.children[idx];
+        if(id === CORRECT[idx].id){
+          li.classList.add('correct');
+          correctCount++;
+        } else {
+          li.classList.add('incorrect');
+        }
+      });
+      if(correctCount === CORRECT.length){
+        resultEl.innerHTML = '<span class="correct">Hebat! Semua urutan benar ✅</span>';
+        popup.classList.add('active'); // tampilkan popup
+      } else {
+        resultEl.innerHTML = `<span class="incorrect">${correctCount} dari ${CORRECT.length} benar. Coba lagi!</span>`;
+      }
+    }
+
+    function resetToCorrect(){
+      createList(CORRECT.slice());
+      resultEl.textContent = '';
+      popup.classList.remove('active');
+    }
+
+    shuffleBtn.addEventListener('click', start);
+    checkBtn.addEventListener('click', check);
+    resetBtn.addEventListener('click', resetToCorrect);
+
+    start();
+  </script>
+</body>
+</html>

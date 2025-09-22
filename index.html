@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Game Solve Learning</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html,body { height: 100%; font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+
+  /* video background */
+  .bg-video {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+  }
+  .bg-video video {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    transform: translate(-50%,-50%);
+    object-fit: cover;
+    filter: brightness(0.55) saturate(0.95);
+  }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: -1;
+  }
+
+  /* konten utama */
+  .wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+  .panel {
+    width: 100%;
+    max-width: 1100px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(6px);
+    border-radius: 16px;
+    padding: 28px;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  }
+  .header { display:flex; align-items:center; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+  .title { display:flex; gap: 16px; align-items:center; }
+  .logo { width:64px; height:64px; border-radius:12px; background: linear-gradient(135deg,#4facfe,#00f2fe);
+          display:flex; align-items:center; justify-content:center; font-weight:700; color:#042;
+          box-shadow: 0 6px 14px rgba(0,0,0,0.25); }
+  .title h1 { font-size:20px; }
+  .title p { font-size:13px; opacity:0.9; margin-top:4px; color:#e6f0ff; }
+  .score { text-align:right; }
+  .score b { display:block; font-size:14px; }
+  .score small { display:block; font-size:12px; opacity:0.85; }
+
+  /* grid misi */
+  .grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; margin-top: 12px; }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 18px;
+    display:flex; flex-direction:column; gap:12px; min-height:140px;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.5); }
+  .card .head { display:flex; justify-content:space-between; align-items:center; }
+  .card h3 { font-size:16px; }
+  .badge { font-size:12px; padding:6px 10px; border-radius:999px; background: rgba(255,255,255,0.06); }
+  .desc { font-size:13px; opacity:0.95; color: #e9f1ff; }
+  .actions { margin-top: auto; display:flex; gap:10px; align-items:center; }
+  .btn {
+    padding:10px 14px; border-radius:10px; border: none; cursor:pointer; font-weight:600;
+    background: linear-gradient(90deg,#4facfe,#00f2fe); color: #042; box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+  }
+  .btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #e7f4ff; }
+
+  @media (max-width:760px) { .grid { grid-template-columns: 1fr; } }
+
+  /* tombol suara */
+  #soundBtn {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 10;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.8);
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- VIDEO BACKGROUND -->
+  <div class="bg-video" aria-hidden="true">
+    <video autoplay loop muted playsinline id="bgvid">
+      <source src="suasanamalamdesa.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="overlay" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <main class="panel">
+      <div class="header">
+        <div class="title">
+          <div class="logo">CD</div>
+          <div>
+            <h1>Game Solve Learning</h1>
+            <p>Ilmu Pengetahuan Alam.</p>
+          </div>
+        </div>
+     
+      </div>
+
+      <section class="grid">
+        <article class="card">
+          <div class="head"><h3>Materi — Magnet, Listrik dan Teknologi untuk Kehidupan</h3><div class="badge"></div></div>
+          <div class="desc">Mengenal listrik</div>
+          <div class="actions"><button class="btn" onclick="startMission(1)">Mulai</button></div>
+        </article>
+        <article class="card">
+          <div class="head"><h3>Materi — Sistem Tata Surya</h3><div class="badge"></div></div>
+          <div class="desc">Mengenal tata surya</div>
+          <div class="actions"><button class="btn" onclick="startMission(2)">Mulai</button></div>
+        </article>
+        <article class="card">
+          <div class="head"><h3>Materi — Energi</h3><div class="badge"></div></div>
+          <div class="desc">Mengenal Energi</div>
+          <div class="actions"><button class="btn" onclick="startMission(3)">Mulai</button></div>
+        </article>
+       <article class="card">
+          <div class="head"><h3>Evaluasi</h3><div class="badge"></div></div>
+          <div class="desc"></div>
+          <div class="actions"><button class="btn" onclick="startMission('boss')">Mulai</button></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- Tombol suara -->
+  <button id="soundBtn">🔊 Aktifkan Suara</button>
+
+<script>
+  // ambil skor dari localStorage
+  let totalScore = parseInt(localStorage.getItem("totalScore") || "0", 10);
+  document.getElementById("totalScore").textContent = "Skor: " + totalScore;
+
+  function startMission(id) {
+     if (id === 1) {
+      window.location.href = "mengenallistrik/listrik.html";
+    } else if (id === 2) {
+      window.location.href = "tatasurya/awalangkasa.html";   // ✅ arahkan ke halaman tata surya
+    } else if (id === 3) {
+      window.location.href = "energi.html";      // misal nanti kamu tambahkan
+    } else if (id === "boss") {
+      window.location.href = "evaluasi.html";    // misal untuk evaluasi
+    } else {
+      alert("Halaman misi " + id + " belum dibuat 😊");
+    }
+  
+  }
+
+  const vid = document.getElementById("bgvid");
+  const soundBtn = document.getElementById("soundBtn");
+
+  // pastikan mulai muted
+  vid.muted = true;
+
+  soundBtn.addEventListener("click", async () => {
+    try {
+      // jika video pause, play dulu supaya audio bisa aktif
+      if (vid.paused) {
+        await vid.play();
+      }
+      vid.muted = !vid.muted;
+      soundBtn.textContent = vid.muted ? "🔇 Aktifkan Suara" : "🔊 Suara Nyala";
+    } catch (err) {
+      console.error("Gagal mengaktifkan suara:", err);
+      alert("Browser memblokir audio. Coba klik lagi tombol suara.");
+    }
+  });
+</script>
+
+</body>
+</html>

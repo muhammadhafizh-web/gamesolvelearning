@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulasi Magnet</title>
+  <style>
+    /* Tombol Home kiri bawah */
+.home-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #009688;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1500;
+}
+.home-button:hover {
+  background: #00796b;
+}
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      position: relative;
+    }
+    img {
+      position: absolute;
+      width: 120px;
+      cursor: grab;
+      user-select: none;
+    }
+    #magnet1 { top: 50%; left: 10%; transform: translate(-50%, -50%); }
+    #magnet2 { top: 20%; left: 70%; }
+    #magnet3 { top: 70%; left: 60%; }
+
+    /* Tombol */
+    .top-buttons {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+    .top-buttons button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #673ab7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .top-buttons button:hover {
+      background: #4527a0;
+    }
+
+    /* Popup Instruksi */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .popup-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      width: 80%;
+      text-align: left;
+    }
+    .popup-content h2 {
+      margin-top: 0;
+      color: #673ab7;
+    }
+    .popup-content ol {
+      padding-left: 20px;
+    }
+
+    /* Embed H5P */
+    .embed-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+    }
+    .embed-container iframe {
+      max-width: 90vw;
+      max-height: 50vh;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <button class="home-button" onclick="window.location.href='index.html'">Home</button>
+  <!-- Tombol -->
+  <div class="top-buttons">
+    <button id="instructionsBtn">Instruksi Penggunaan</button>
+    <button id="nextMissionBtn">Misi Berikutnya</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <!-- Popup -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <h2>Instruksi Penggunaan</h2>
+      <p>Pada Misi kali ini Anda akan diberikan simulasi dari sifat magnet:</p>
+      <ol>
+        <li>Magnet akan saling tolak menolak jika dihadapkan dengan kutub yang sama</li>
+        <li>Magnet akan saling tarik/menarik atau lengket jika dihadapkan dengan kutub yang berbeda</li>
+        <li>Temukan alat/bahan yang dapat menarik magnet</li>
+      </ol>
+      <button onclick="closePopup()">Tutup</button>
+    </div>
+  </div>
+
+  <!-- Objek Magnet -->
+  <img id="magnet1" src="magnet1.png" alt="Magnet 1" draggable="false">
+  <img id="magnet2" src="magnet2.png" alt="Magnet 2" draggable="false">
+  <img id="magnet3" src="magnet3.png" alt="Magnet 3" draggable="false">
+
+  <!-- Embed H5P di tengah bawah -->
+  <div class="embed-container">
+    <iframe src="https://ahmaddahlanuniversity.h5p.com/content/1292699942765041357/embed" 
+            aria-label="Sifat Magnet" 
+            width="1088" height="637" 
+            frameborder="0" 
+            allowfullscreen="allowfullscreen" 
+            allow="autoplay *; geolocation *; microphone *; camera *; midi *; encrypted-media *">
+    </iframe>
+    <script src="https://ahmaddahlanuniversity.h5p.com/js/h5p-resizer.js" charset="UTF-8"></script>
+  </div>
+
+  <!-- GSAP + Script Interaksi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+    // Tombol
+    const popup = document.getElementById("popup");
+    document.getElementById("instructionsBtn").onclick = () => popup.style.display = "flex";
+    document.getElementById("nextMissionBtn").onclick = () => window.location.href = "rakitpembangkit.html";
+    document.getElementById("resetBtn").onclick = () => location.reload();
+    function closePopup(){ popup.style.display = "none"; }
+
+    // Magnet
+    const magnet1 = document.getElementById("magnet1");
+    const magnet2 = document.getElementById("magnet2");
+    const magnet3 = document.getElementById("magnet3");
+
+    let isDragging = false;
+    let offsetX, offsetY;
+    let attached12 = false;
+
+    const initialPos = {
+      magnet1: { left: magnet1.offsetLeft, top: magnet1.offsetTop },
+      magnet2: { left: magnet2.offsetLeft, top: magnet2.offsetTop }
+    };
+
+    // --- Drag Magnet1 ---
+    magnet1.addEventListener("mousedown", (e) => {
+      if (attached12) return;
+      isDragging = true;
+      offsetX = e.clientX - magnet1.offsetLeft;
+      offsetY = e.clientY - magnet1.offsetTop;
+      magnet1.style.cursor = "grabbing";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        magnet1.style.left = `${e.clientX - offsetX}px`;
+        magnet1.style.top = `${e.clientY - offsetY}px`;
+      }
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (isDragging) {
+        isDragging = false;
+        magnet1.style.cursor = "grab";
+        if (distance(magnet1, magnet2) < 100) attachMagnets();
+      }
+    });
+
+    // --- Fungsi Tempel ---
+    function attachMagnets() {
+      attached12 = true;
+      let targetX = magnet2.offsetLeft;
+      let targetY = magnet2.offsetTop;
+      gsap.to(magnet1, {
+        left: targetX - magnet1.offsetWidth,
+        top: targetY,
+        duration: 0.4,
+        ease: "power2.inOut"
+      });
+    }
+
+    // --- Fungsi Lepas ---
+    function releaseMagnets() {
+      if (attached12) {
+        attached12 = false;
+        gsap.to(magnet1, {
+          left: initialPos.magnet1.left,
+          top: initialPos.magnet1.top,
+          duration: 0.5,
+          ease: "power2.out"
+        });
+        gsap.to(magnet2, {
+          left: initialPos.magnet2.left,
+          top: initialPos.magnet2.top,
+          duration: 0.5,
+          ease: "power2.out"
+        });
+      }
+    }
+    magnet1.addEventListener("dblclick", releaseMagnets);
+    magnet2.addEventListener("dblclick", releaseMagnets);
+
+    // --- Interaksi Magnet1 & Magnet3 (tolak) ---
+    function checkRepel() {
+      if (!attached12) {
+        let d13 = distance(magnet1, magnet3);
+        if (d13 < 150) {
+          let dx = magnet3.offsetLeft - magnet1.offsetLeft;
+          let dy = magnet3.offsetTop - magnet1.offsetTop;
+          let angle = Math.atan2(dy, dx);
+          gsap.to(magnet3, {
+            left: magnet3.offsetLeft + Math.cos(angle) * 100,
+            top: magnet3.offsetTop + Math.sin(angle) * 100,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        }
+      }
+      requestAnimationFrame(checkRepel);
+    }
+    checkRepel();
+
+    // --- Hitung Jarak ---
+    function distance(el1, el2) {
+      let x1 = el1.offsetLeft + el1.offsetWidth / 2;
+      let y1 = el1.offsetTop + el1.offsetHeight / 2;
+      let x2 = el2.offsetLeft + el2.offsetWidth / 2;
+      let y2 = el2.offsetTop + el2.offsetHeight / 2;
+      return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+    }
+  </script>
+</body>
+</html>

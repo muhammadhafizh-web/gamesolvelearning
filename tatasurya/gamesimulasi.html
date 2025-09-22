@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit Simulator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0b102b;
+            color: white;
+            overflow: hidden;
+            touch-action: none; 
+        }
+
+        #simulation-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #sun {
+            width: 100px; 
+            height: 100px;
+            background-image: url('matahari.png'); 
+            background-size: cover; 
+            background-position: center;
+            border-radius: 50%;
+            box-shadow: 0 0 50px #fdd835; 
+            position: absolute;
+        }
+
+        #orbit {
+            width: 450px;
+            height: 450px;
+            border: 1px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        #earth {
+            width: 50px; 
+            height: 50px;
+            background-image: url('bumisiangmalam.png'); 
+            background-size: cover; 
+            background-position: center;
+            border-radius: 50%;
+            position: absolute;
+            cursor: grab;
+            z-index: 10;
+        }
+
+        #earth:active {
+            cursor: grabbing;
+        }
+
+        #info-display {
+            position: absolute;
+            bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+        
+        .controls {
+            height: 50px;
+        }
+        
+        /* === CSS BARU UNTUK TOMBOL LANJUT === */
+        .lanjut-btn {
+          position: fixed; /* Membuat posisi tetap di layar */
+          bottom: 20px;    /* 20px dari bawah */
+          right: 20px;     /* 20px dari kanan */
+          padding: 12px 25px;
+          background-color: #4a90e2; /* Warna biru */
+          color: white;
+          text-decoration: none; /* Menghilangkan garis bawah link */
+          border-radius: 8px;
+          font-weight: bold;
+          font-size: 16px;
+          z-index: 1000; /* Memastikan tombol selalu di atas */
+          transition: background-color 0.3s;
+        }
+
+        .lanjut-btn:hover {
+          background-color: #357abd; /* Warna saat cursor di atasnya */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="simulation-container">
+        <div id="sun"></div>
+        <div id="orbit"></div>
+        <div id="earth"></div>
+        <div id="info-display">Musim Semi</div>
+    </div>
+
+    <div class="controls">
+        </div>
+    
+    <a href="simulasigerhana.html" class="lanjut-btn">Lanjut</a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('simulation-container');
+            const earth = document.getElementById('earth');
+            const infoDisplay = document.getElementById('info-display');
+
+            const ORBIT_RADIUS = 225;
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+
+            let isDragging = false;
+            let earthRotation = 90;
+
+            function positionEarth(angle) {
+                const x = centerX + ORBIT_RADIUS * Math.cos(angle);
+                const y = centerY + ORBIT_RADIUS * Math.sin(angle);
+                earth.style.left = `${x - earth.offsetWidth / 2}px`;
+                earth.style.top = `${y - earth.offsetHeight / 2}px`;
+                
+                updateSeason(angle);
+            }
+            
+            function updateSeason(angle) {
+                let deg = angle * (180 / Math.PI);
+                deg = (deg + 360) % 360;
+
+                if (deg >= 315 || deg < 45) {
+                    infoDisplay.textContent = 'Musim Dingin';
+                } else if (deg >= 45 && deg < 135) {
+                    infoDisplay.textContent = 'Musim Semi';
+                } else if (deg >= 135 && deg < 225) {
+                    infoDisplay.textContent = 'Musim Panas';
+                } else {
+                    infoDisplay.textContent = 'Musim Gugur';
+                }
+            }
+            
+            function updateDayNight() {
+                earth.style.background = `
+                    linear-gradient(${earthRotation}deg, rgba(0, 0, 0, 0.7) 50%, transparent 50%),
+                    url('bumisiangmalam.png') center / cover
+                `;
+            }
+
+            function animate() {
+                earthRotation += 0.2; 
+                updateDayNight();
+                requestAnimationFrame(animate);
+            }
+
+            function startDrag(e) {
+                isDragging = true;
+                earth.style.cursor = 'grabbing';
+            }
+
+            function endDrag(e) {
+                isDragging = false;
+                earth.style.cursor = 'grab';
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+                
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                
+                const mouseX = clientX - containerRect.left;
+                const mouseY = clientY - containerRect.top;
+
+                const dx = mouseX - centerX;
+                const dy = mouseY - centerY;
+                const angle = Math.atan2(dy, dx);
+                
+                positionEarth(angle);
+            }
+
+            earth.addEventListener('mousedown', startDrag);
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('mousemove', drag);
+            
+            earth.addEventListener('touchstart', startDrag);
+            window.addEventListener('touchend', endDrag);
+            window.addEventListener('touchmove', drag);
+
+            positionEarth(Math.PI / 2);
+
+            animate();
+        });
+    </script>
+</body>
+</html>

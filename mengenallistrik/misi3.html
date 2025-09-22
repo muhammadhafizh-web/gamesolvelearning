@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Bengkel Listrik dengan Inventori</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: url("bengkellistrik.png") no-repeat center center fixed;
+      background-size: cover;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #main-title {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      z-index: 500;
+      text-align: center;
+      width: 90%;
+    }
+    
+    .top-left-buttons {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      display: flex;
+      gap: 10px;
+    }
+
+    #instructions-button, #reset-button {
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      border: 2px solid white;
+      user-select: none;
+    }
+
+    #instructions-button {
+      background-color: #4CAF50;
+    }
+    #instructions-button:hover {
+      background-color: #45a049;
+    }
+    
+    #reset-button {
+      background-color: #f44336;
+    }
+    #reset-button:hover {
+      background-color: #da190b;
+    }
+
+    /* === GAYA TOMBOL MISI BERIKUTNYA (BARU) === */
+    #next-mission-button {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(45deg, #ffc107, #ff9800);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 50px; /* Bentuk pil */
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 1000;
+      border: 2px solid white;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      /* Properti untuk animasi */
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s;
+    }
+
+    #next-mission-button.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    #next-mission-button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+    /* === AKHIR GAYA TOMBOL === */
+
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes slideDownFadeIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes slideUpFadeOut {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-50px); opacity: 0; }
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      padding: 20px 30px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 10px;
+      position: relative;
+      color: #333;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+      animation: slideDownFadeIn 0.5s ease-out forwards;
+    }
+
+    .modal-content.closing {
+      animation: slideUpFadeOut 0.5s ease-out forwards;
+    }
+    
+    .modal-content h2 { margin-top: 0; color: #4CAF50; }
+    .modal-content ol { line-height: 1.6; padding-left: 20px; }
+    .modal-content li { margin-bottom: 10px; }
+
+    .close-button {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close-button:hover, .close-button:focus { color: black; }
+
+    .inventory {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid #fff;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      max-width: 90%;
+    }
+
+    .inventory img {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      cursor: grab;
+      transition: transform 0.2s;
+    }
+
+    .inventory img:hover { transform: scale(1.2); }
+
+    .draggable {
+      position: absolute;
+      cursor: grab;
+      display: inline-block;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      transform-origin: center center;
+    }
+
+    .draggable img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .resize-handle {
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border: 1px solid #000;
+      position: absolute;
+      bottom: -6px;
+      right: -6px;
+      cursor: se-resize;
+      z-index: 10;
+    }
+
+    .rotate-handle {
+      width: 14px;
+      height: 14px;
+      background: #ff0;
+      border: 1px solid #000;
+      border-radius: 50%;
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      cursor: grab;
+      z-index: 10;
+    }
+
+    .selected { border-color: yellow; }
+
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .cable {
+      stroke: rgb(255, 255, 255);
+      stroke-width: 4;
+      fill: none;
+      stroke-dasharray: 8;
+      animation: dash 1s linear infinite;
+      pointer-events: stroke;
+    }
+
+    @keyframes dash { to { stroke-dashoffset: -16; } }
+
+    .glow {
+      filter: drop-shadow(0 0 20px yellow) drop-shadow(0 0 40px orange);
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { filter: drop-shadow(0 0 15px yellow) drop-shadow(0 0 30px orange); }
+      to { filter: drop-shadow(0 0 30px yellow) drop-shadow(0 0 60px orange); }
+    }
+    
+    .connection-point {
+      width: 16px;
+      height: 16px;
+      background: rgba(0, 255, 255, 0.7);
+      border: 1px solid white;
+      border-radius: 50%;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      z-index: 20;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      color: black;
+    }
+
+    .connection-point:hover { background: rgb(0, 255, 0); }
+    .positive { top: 0; left: 50%; }
+    .negative { top: 100%; left: 50%; }
+    .input { top: 50%; left: 0; }
+    .output { top: 50%; left: 100%; }
+  </style>
+</head>
+<body>
+
+  <div id="main-title">Buatlah Rangkaian Listrik (seri/Paralel) Menggunakan alat-alat yang tersedia pada Inventori</div>
+
+  <div class="top-left-buttons">
+    <div id="instructions-button">Instruksi Penggunaan</div>
+    <div id="reset-button">Reset</div>
+  </div>
+
+  <div id="instructions-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Instruksi Penggunaan</h2>
+      <p>Pada Misi Kali ini Anda diminta untuk membuat rangkaian listrik dari alat yang tersedia didalam inventori pada bagian tengah Bawah layer, dengan cara:</p>
+      <ol>
+        <li>Tarik dan Lepas alat yang ada pada inventori keluar.</li>
+        <li>Susun rangkaian untuk dapat menyalakan lampu.</li>
+        <li>Klik pada setiap node untuk menghubungkan arus.</li>
+        <li>Tekan tombol Del pada keyboard untuk menghapus objek yang dipilih.</li>
+        <li>Klik node kuning pada bagian atas objek untuk Rotate (memutar).</li>
+        <li>Klik tahan dan Tarik pada kotak kecil dibawah objek untuk Resize (mengubah ukuran).</li>
+        <li>Klik kanan pada kabel arus untuk menghapusnya.</li>
+        <li>Jika rangkaian yang anda rangkai sudah benar, klik pada saklar maka lampu akan menyala.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div id="next-mission-button">Misi Berikutnya &raquo;</div>
+
+  <svg id="cableLayer"></svg>
+
+  <div class="inventory" id="inventory">
+    <img src="bolalampu.png" alt="Bola Lampu" draggable="true">
+    <img src="electriccable.png" alt="Electric Cable" draggable="true">
+    <img src="socket2.png" alt="Socket" draggable="true">
+    <img src="battery.png" alt="Battery" draggable="true">
+    <img src="kabellistrik.png" alt="Kabel Listrik" draggable="true">
+    <img src="kabellistrik1.png" alt="Kabel Listrik 1" draggable="true">
+    <img src="switch.png" alt="Switch" draggable="true">
+    <img src="kayu.png" alt="Kayu" draggable="true">
+    <img src="tape.png" alt="Tape" draggable="true">
+    <img src="pvc.png" alt="PVC" draggable="true">
+  </div>
+
+  <script>
+    const instructionsButton = document.getElementById('instructions-button');
+    const resetButton = document.getElementById('reset-button');
+    const nextMissionButton = document.getElementById('next-mission-button');
+    const modal = document.getElementById('instructions-modal');
+    const modalContent = document.querySelector('.modal-content');
+    const closeButton = document.querySelector('.close-button');
+
+    function openModal() {
+      modalContent.classList.remove('closing');
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      modalContent.classList.add('closing');
+      setTimeout(() => { modal.style.display = 'none'; }, 500);
+    }
+
+    instructionsButton.addEventListener('click', openModal);
+    closeButton.addEventListener('click', closeModal);
+    window.addEventListener('click', (event) => { if (event.target == modal) closeModal(); });
+    resetButton.addEventListener('click', () => { location.reload(); });
+    nextMissionButton.addEventListener('click', () => {
+        window.location.href = 'efekmagnet.html';
+        // Ganti baris di atas dengan baris di bawah jika sudah ada halaman berikutnya
+        // window.location.href = 'misi_berikutnya.html';
+    });
+
+    const inventory = document.getElementById("inventory");
+    const cableLayer = document.getElementById("cableLayer");
+    let selectedObject = null;
+    let placedObjects = new Map();
+    let objectCounter = 0;
+    let firstConnectionPoint = null;
+    let connections = [];
+
+    inventory.querySelectorAll("img").forEach(img => {
+        img.addEventListener("dragstart", e => {
+            e.dataTransfer.setData("src", img.src);
+            e.dataTransfer.setData("alt", img.alt);
+        });
+    });
+
+    document.body.addEventListener("dragover", e => { e.preventDefault(); });
+
+    document.body.addEventListener("drop", e => {
+        e.preventDefault();
+        const src = e.dataTransfer.getData("src");
+        if (src) {
+            const objectId = `obj-${objectCounter++}`;
+            const wrapper = document.createElement("div");
+            wrapper.className = "draggable";
+            wrapper.id = objectId;
+            wrapper.style.left = (e.pageX - 32) + "px";
+            wrapper.style.top = (e.pageY - 32) + "px";
+            wrapper.style.width = "64px";
+            wrapper.style.height = "64px";
+            wrapper.dataset.rotation = 0;
+            wrapper.dataset.type = src.split('/').pop().replace('.png', '');
+
+            const newObj = document.createElement("img");
+            newObj.src = src;
+            const resizeHandle = document.createElement("div");
+            resizeHandle.className = "resize-handle";
+            const rotateHandle = document.createElement("div");
+            rotateHandle.className = "rotate-handle";
+
+            wrapper.appendChild(newObj);
+            wrapper.appendChild(resizeHandle);
+            wrapper.appendChild(rotateHandle);
+            document.body.appendChild(wrapper);
+
+            addConnectionPoints(wrapper);
+            placedObjects.set(objectId, { element: wrapper, type: wrapper.dataset.type, state: false });
+
+            makeDraggable(wrapper);
+            makeResizable(wrapper, resizeHandle);
+            makeRotatable(wrapper, rotateHandle);
+            makeSelectable(wrapper);
+
+            if (wrapper.dataset.type === "switch") {
+                wrapper.addEventListener("click", (e) => {
+                    if (e.target.classList.contains('connection-point')) return;
+                    const switchObj = placedObjects.get(wrapper.id);
+                    switchObj.state = !switchObj.state;
+                    newObj.style.filter = switchObj.state ? 'sepia(100%)' : 'none';
+                    checkCircuitAndToggleLamp();
+                });
+            }
+        }
+    });
+
+    function addConnectionPoints(wrapper) {
+        const type = wrapper.dataset.type;
+        let points = [];
+        switch (type) {
+            case 'battery':
+                points.push({ id: 'positive', class: 'positive', label: '+' });
+                points.push({ id: 'negative', class: 'negative', label: '-' });
+                break;
+            case 'kabellistrik': case 'kabellistrik1': case 'switch': case 'bolalampu':
+                points.push({ id: 'input', class: 'input' });
+                points.push({ id: 'output', class: 'output' });
+                break;
+        }
+        points.forEach(p => {
+            const point = document.createElement('div');
+            point.className = `connection-point ${p.class}`;
+            point.dataset.parentId = wrapper.id;
+            point.dataset.pointId = p.id;
+            if(p.label) point.innerText = p.label;
+            wrapper.appendChild(point);
+            makeConnectable(point);
+        });
+    }
+
+    function makeDraggable(el) {
+        let offsetX, offsetY, isDown = false;
+        el.addEventListener("mousedown", e => {
+            if (e.target.classList.contains("resize-handle") || e.target.classList.contains("rotate-handle") || e.target.classList.contains("connection-point") || e.button === 2) return;
+            isDown = true;
+            const rect = el.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            el.style.cursor = "grabbing";
+        });
+        document.addEventListener("mousemove", e => {
+            if (!isDown) return;
+            el.style.left = (e.clientX - offsetX) + "px";
+            el.style.top = (e.clientY - offsetY) + "px";
+            redrawConnections();
+        });
+        document.addEventListener("mouseup", () => {
+            if (isDown) { isDown = false; el.style.cursor = "grab"; redrawConnections(); }
+        });
+    }
+
+    function makeResizable(wrapper, handle) {
+        let isResizing = false, startX, startY, startW, startH;
+        handle.addEventListener("mousedown", e => {
+            e.stopPropagation(); isResizing = true; startX = e.clientX; startY = e.clientY;
+            startW = wrapper.offsetWidth; startH = wrapper.offsetHeight; document.body.style.cursor = "se-resize";
+        });
+        document.addEventListener("mousemove", e => {
+            if (!isResizing) return;
+            wrapper.style.width = Math.max(32, startW + (e.clientX - startX)) + "px";
+            wrapper.style.height = Math.max(32, startH + (e.clientY - startY)) + "px";
+            redrawConnections();
+        });
+        document.addEventListener("mouseup", () => {
+            if (isResizing) { isResizing = false; document.body.style.cursor = "default"; redrawConnections(); }
+        });
+    }
+
+    function makeRotatable(wrapper, handle) {
+        let isRotating = false, centerX, centerY, startAngle, initialRotation;
+        handle.addEventListener("mousedown", e => {
+            e.stopPropagation(); isRotating = true; const rect = wrapper.getBoundingClientRect();
+            centerX = rect.left + rect.width / 2; centerY = rect.top + rect.height / 2;
+            startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+            initialRotation = parseFloat(wrapper.dataset.rotation) || 0; document.body.style.cursor = "grabbing";
+        });
+        document.addEventListener("mousemove", e => {
+            if (!isRotating) return;
+            const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+            let totalRotation = initialRotation + (currentAngle - startAngle) * (180 / Math.PI);
+            wrapper.style.transform = `rotate(${totalRotation}deg)`;
+        });
+        document.addEventListener("mouseup", e => {
+            if (isRotating) {
+                const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                wrapper.dataset.rotation = initialRotation + (currentAngle - startAngle) * (180 / Math.PI);
+                isRotating = false; document.body.style.cursor = "default"; redrawConnections();
+            }
+        });
+    }
+
+    function makeSelectable(el) {
+        el.addEventListener("click", e => {
+            e.stopPropagation(); 
+            if (e.target.classList.contains("resize-handle") || e.target.classList.contains("rotate-handle") || e.target.classList.contains("connection-point")) return;
+            if (selectedObject) selectedObject.classList.remove("selected");
+            selectedObject = el;
+            selectedObject.classList.add("selected");
+        });
+    }
+
+    document.body.addEventListener("click", () => {
+        if (selectedObject) { selectedObject.classList.remove("selected"); selectedObject = null; }
+    });
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "Delete" && selectedObject) {
+            const objectId = selectedObject.id;
+            connections = connections.filter(c => c.from.dataset.parentId !== objectId && c.to.dataset.parentId !== objectId);
+            placedObjects.delete(objectId);
+            selectedObject.remove(); selectedObject = null;
+            redrawConnections();
+            checkCircuitAndToggleLamp();
+        }
+    });
+
+    function makeConnectable(point) {
+        point.addEventListener("click", e => {
+            e.stopPropagation();
+            if (!firstConnectionPoint) {
+                firstConnectionPoint = point;
+                point.style.background = "rgb(255, 165, 0)";
+            } else {
+                if (firstConnectionPoint === point || firstConnectionPoint.dataset.parentId === point.dataset.parentId) return;
+                connections.push({ from: firstConnectionPoint, to: point });
+                firstConnectionPoint.style.background = "";
+                firstConnectionPoint = null;
+                redrawConnections();
+                checkCircuitAndToggleLamp();
+            }
+        });
+    }
+
+    function redrawConnections() {
+        cableLayer.innerHTML = "";
+        connections.forEach((conn, index) => {
+            const rectA = conn.from.getBoundingClientRect(); const rectB = conn.to.getBoundingClientRect();
+            const ax = rectA.left + rectA.width / 2 + window.scrollX; const ay = rectA.top + rectA.height / 2 + window.scrollY;
+            const bx = rectB.left + rectB.width / 2 + window.scrollX; const by = rectB.top + rectB.height / 2 + window.scrollY;
+            let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", ax); line.setAttribute("y1", ay); line.setAttribute("x2", bx); line.setAttribute("y2", by);
+            line.classList.add("cable");
+            line.addEventListener("contextmenu", e => {
+                e.preventDefault(); connections.splice(index, 1);
+                redrawConnections(); checkCircuitAndToggleLamp();
+            });
+            cableLayer.appendChild(line);
+        });
+    }
+
+    function checkCircuitAndToggleLamp() {
+        turnLamp(isCircuitComplete());
+    }
+
+    function isCircuitComplete() {
+        const battery = Array.from(placedObjects.values()).find(obj => obj.type === 'battery');
+        if (!battery) return false;
+        const startPoint = battery.element.querySelector('.positive');
+        const endPoint = battery.element.querySelector('.negative');
+        let visitedPoints = new Set();
+        let stack = [startPoint];
+        while (stack.length > 0) {
+            const currentPoint = stack.pop();
+            if (visitedPoints.has(currentPoint)) continue;
+            visitedPoints.add(currentPoint);
+            for (const nextEntryPoint of findNextPoints(currentPoint)) {
+                if (nextEntryPoint === endPoint) return true;
+                const partnerPoint = findPartnerPoint(nextEntryPoint, nextEntryPoint.dataset.parentId);
+                if (partnerPoint && !visitedPoints.has(partnerPoint)) {
+                    stack.push(partnerPoint);
+                }
+            }
+        }
+        return false;
+    }
+
+    function findNextPoints(currentPoint) {
+        let next = [];
+        connections.forEach(conn => {
+            if (conn.from === currentPoint) next.push(conn.to);
+            if (conn.to === currentPoint) next.push(conn.from);
+        });
+        return next;
+    }
+
+    function findPartnerPoint(entryPoint, objectId) {
+        const objectData = placedObjects.get(objectId);
+        if (!objectData || (objectData.type === 'switch' && !objectData.state)) return null;
+        const points = objectData.element.querySelectorAll('.connection-point');
+        if (points.length < 2) return null;
+        for (const point of points) { if (point !== entryPoint) return point; }
+        return null;
+    }
+
+    function turnLamp(on) {
+        let lampIsOn = false;
+        placedObjects.forEach(obj => {
+            if (obj.type === 'bolalampu') {
+                const lampImg = obj.element.querySelector("img");
+                if (on) {
+                    lampImg.classList.add("glow");
+                    lampIsOn = true;
+                } else {
+                    lampImg.classList.remove("glow");
+                }
+            }
+        });
+        // Tampilkan atau sembunyikan tombol berdasarkan status lampu
+        if (lampIsOn) {
+            nextMissionButton.classList.add('visible');
+        } else {
+            nextMissionButton.classList.remove('visible');
+        }
+    }
+  </script>
+</body>
+</html>

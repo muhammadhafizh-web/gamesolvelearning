@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Petualangan Tata Surya</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: "Comic Sans MS", "Segoe UI", Arial, sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* Background video */
+    .bg-video {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .bg-video video {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+      filter: brightness(0.6);
+    }
+
+    /* Overlay bintang tipis */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,20,0.3);
+      z-index: -1;
+    }
+
+    /* Konten tengah */
+    .content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 30px;
+      max-width: 900px;
+      margin: auto;
+      line-height: 1.6;
+      animation: fadeIn 2s ease;
+    }
+    .content h1 {
+      font-size: 28px;
+      margin-bottom: 18px;
+      color: #ffeb3b;
+      text-shadow: 2px 2px 6px #000;
+    }
+    .content p {
+      font-size: 18px;
+      margin-bottom: 25px;
+      background: rgba(0,0,0,0.4);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    }
+
+    /* Tombol Mulai */
+    .start-btn {
+      font-size: 20px;
+      font-weight: bold;
+      padding: 14px 28px;
+      background: linear-gradient(90deg, #ff9800, #ff5722);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .start-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 25px rgba(255,140,0,0.7);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Video Background -->
+  <div class="bg-video">
+    <video autoplay loop muted playsinline>
+      <source src="videoangkasa.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="overlay"></div>
+
+  <!-- Konten Utama -->
+  <div class="content">
+    <h1>Halo adik-adik petualang luar angkasa! 🚀</h1>
+    <p>
+      Pernahkah kalian menatap langit malam yang cerah dan bertanya-tanya, 
+      "Ada apa saja ya di atas sana?" Di antara jutaan bintang yang berkelip, ada sebuah tempat istimewa yang kita sebut rumah. 
+      Tempat ini sangat luas dan penuh dengan benda-benda langit yang menakjubkan. 
+      Inilah <b>Tata Surya</b> kita! 🌌<br><br>
+
+      Bayangkan Tata Surya seperti sebuah keluarga besar dengan <b>Matahari</b> sebagai ibunya yang selalu menjadi pusat perhatian. 
+      Semua anggota keluarga, yaitu <b>planet-planet</b>, bulan, asteroid, dan komet, bergerak mengelilinginya dengan setia. 🌍🪐☄️<br><br>
+
+      Dalam bab ini, kita akan memulai perjalanan seru untuk berkenalan dengan setiap anggota keluarga Tata Surya. 
+      Kita akan mencari tahu siapa saja nama-nama planet, apa keunikan mereka, dan bagaimana mereka semua bisa bergerak dengan teratur. 
+      Siapkan diri kalian, karena kita akan terbang melintasi angkasa dan mengungkap rahasia alam semesta yang menakjubkan! ✨
+    </p>
+
+    <button class="start-btn" onclick="window.location.href='kenaltatasurya.html'">Mulai 🚀</button>
+  </div>
+
+</body>
+</html>

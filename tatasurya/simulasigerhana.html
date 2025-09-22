@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Gerhana</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0c0c1a;
+            color: white;
+            overflow: hidden;
+            touch-action: none; 
+        }
+
+        #simulation-space {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+        }
+
+        #sun {
+            width: 120px;
+            height: 120px;
+            background-image: url('matahari.png'); 
+            background-size: cover; 
+            background-position: center;
+            border-radius: 50%;
+            box-shadow: 0 0 60px #fdd835d8;
+            position: absolute;
+            left: 0;
+            z-index: 1;
+        }
+
+        #earth {
+            width: 90px;
+            height: 90px;
+            background-image: url('earth.png'); 
+            background-size: cover; 
+            background-position: center;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+        }
+        
+        #moon-orbit {
+            width: 250px;
+            height: 250px;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        #moon {
+            width: 40px;
+            height: 40px;
+            background-image: url('moon.png'); 
+            background-size: cover; 
+            background-position: center;
+            border-radius: 50%;
+            position: absolute;
+            cursor: grab;
+            z-index: 10;
+        }
+
+        #moon:active {
+            cursor: grabbing;
+        }
+
+        #shadow {
+            position: absolute;
+            height: 40px;
+            width: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: none;
+            z-index: 6; 
+        }
+        
+        .moon-eclipse {
+            background-color: rgba(211, 84, 0, 0.7);
+        }
+
+        #info-panel {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+
+        /* ### CSS BARU UNTUK POP-UP ### */
+        .popup {
+            display: none; /* Sembunyi secara default */
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            background-color: #2c3e50;
+            border: 2px solid #3498db;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translate(-50%, -60%);}
+            to {opacity: 1; transform: translate(-50%, -50%);}
+        }
+
+        .popup h2 {
+            margin-top: 0;
+            color: #f1c40f;
+        }
+        
+        .popup button, .popup a {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .popup-footer {
+            text-align: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="simulation-space">
+        <div id="sun"></div>
+        <div id="earth"></div>
+        <div id="moon-orbit"></div>
+        <div id="moon"></div>
+        <div id="shadow"></div> 
+    </div>
+    <div id="info-panel">Geser Bulan di orbitnya</div>
+
+    <div id="success-popup" class="popup">
+        <h2 id="success-title"></h2>
+        <p id="success-message"></p>
+        <button id="close-popup-btn">OK</button>
+    </div>
+
+    <div id="final-popup" class="popup">
+        <h2>🎉 Misi Selesai! 🎉</h2>
+        <p>Kamu berhasil menemukan kedua gerhana dalam waktu:</p>
+        <p id="time-taken" style="font-size: 1.5em; font-weight: bold;"></p>
+        <div class="popup-footer">
+            <a href="futuretech.html">Lanjut</a>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const space = document.getElementById('simulation-space');
+            const earth = document.getElementById('earth');
+            const moon = document.getElementById('moon');
+            const shadow = document.getElementById('shadow');
+            const infoPanel = document.getElementById('info-panel');
+            
+            // Elemen pop-up
+            const successPopup = document.getElementById('success-popup');
+            const successTitle = document.getElementById('success-title');
+            const successMessage = document.getElementById('success-message');
+            const closePopupBtn = document.getElementById('close-popup-btn');
+            const finalPopup = document.getElementById('final-popup');
+            const timeTaken = document.getElementById('time-taken');
+            
+            const ORBIT_RADIUS = 125;
+            const earthCenterX = space.offsetWidth / 2;
+            const earthCenterY = space.offsetHeight / 2;
+
+            let isDragging = false;
+            
+            // ### VARIABEL BARU UNTUK GAMIFIKASI ###
+            let solarEclipseFound = false;
+            let lunarEclipseFound = false;
+            let startTime = Date.now(); // Catat waktu mulai
+            let timerInterval;
+
+            function updateMoonPosition(angle) {
+                const x = earthCenterX + ORBIT_RADIUS * Math.cos(angle);
+                const y = earthCenterY + ORBIT_RADIUS * Math.sin(angle);
+                moon.style.left = `${x - moon.offsetWidth / 2}px`;
+                moon.style.top = `${y - moon.offsetHeight / 2}px`;
+                
+                checkEclipse();
+            }
+            
+            function checkEclipse() {
+                // Jangan cek jika permainan sudah selesai
+                if (solarEclipseFound && lunarEclipseFound) return;
+
+                const moonRect = moon.getBoundingClientRect();
+                const earthRect = earth.getBoundingClientRect();
+                const moonCenterX = moon.offsetLeft + moon.offsetWidth / 2;
+                const ALIGNMENT_THRESHOLD = 15;
+                const isAligned = Math.abs((moonRect.top + moon.offsetHeight/2) - (earthRect.top + earth.offsetHeight/2)) < ALIGNMENT_THRESHOLD;
+                
+                infoPanel.textContent = 'Tidak Ada Gerhana';
+                shadow.style.display = 'none';
+                moon.classList.remove('moon-eclipse');
+
+                if (isAligned) {
+                    if (moonCenterX > (space.offsetWidth * 0.1 / 2 + 50) && moonCenterX < earthCenterX) { 
+                        infoPanel.textContent = 'Gerhana Matahari ☀️';
+                        shadow.style.display = 'block';
+                        shadow.style.width = '40px'; 
+                        shadow.style.left = `${earthCenterX - 20}px`;
+                        shadow.style.top = `${earthCenterY - 20}px`;
+                        shadow.style.zIndex = 11;
+                        
+                        // Tampilkan pop-up jika ini pertama kalinya
+                        if (!solarEclipseFound) {
+                            solarEclipseFound = true;
+                            showSuccessPopup("Gerhana Matahari");
+                            checkIfFinished();
+                        }
+                    }
+                    else if (moonCenterX > earthCenterX) {
+                        infoPanel.textContent = 'Gerhana Bulan 🌕';
+                        moon.classList.add('moon-eclipse');
+                        
+                        // Tampilkan pop-up jika ini pertama kalinya
+                        if (!lunarEclipseFound) {
+                            lunarEclipseFound = true;
+                            showSuccessPopup("Gerhana Bulan");
+                            checkIfFinished();
+                        }
+                    }
+                }
+            }
+
+            // ### FUNGSI-FUNGSI BARU ###
+            function showSuccessPopup(type) {
+                successTitle.textContent = `🎉 Selamat! 🎉`;
+                successMessage.textContent = `Kamu BERHASIL membuat ${type}.`;
+                successPopup.style.display = 'block';
+            }
+
+            function checkIfFinished() {
+                if (solarEclipseFound && lunarEclipseFound) {
+                    // Hentikan interaksi drag
+                    isDragging = false;
+                    moon.removeEventListener('mousedown', startDrag);
+                    moon.removeEventListener('touchstart', startDrag);
+
+                    // Hitung waktu
+                    const endTime = Date.now();
+                    const timeDiff = endTime - startTime; // dalam milidetik
+                    const seconds = Math.floor(timeDiff / 1000);
+                    
+                    timeTaken.textContent = `${seconds} detik`;
+                    
+                    // Tampilkan pop-up akhir setelah jeda singkat
+                    setTimeout(() => {
+                        finalPopup.style.display = 'block';
+                    }, 1000);
+                }
+            }
+
+            closePopupBtn.addEventListener('click', () => {
+                successPopup.style.display = 'none';
+            });
+            
+            function startDrag(e) { isDragging = true; moon.style.cursor = 'grabbing'; }
+            function endDrag(e) { isDragging = false; moon.style.cursor = 'grab'; }
+
+            function drag(e) {
+                if (!isDragging) return;
+                
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                
+                const mouseX = clientX - (space.getBoundingClientRect().left);
+                const mouseY = clientY - (space.getBoundingClientRect().top);
+
+                const dx = mouseX - earthCenterX;
+                const dy = mouseY - earthCenterY;
+                const angle = Math.atan2(dy, dx);
+                
+                updateMoonPosition(angle);
+            }
+
+            moon.addEventListener('mousedown', startDrag);
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('mousemove', drag);
+            moon.addEventListener('touchstart', startDrag);
+            window.addEventListener('touchend', endDrag);
+            window.addEventListener('touchmove', drag);
+
+            updateMoonPosition(Math.PI / 2);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Perakitan Pembangkit Listrik</title>
+  <style>
+    /* Tombol Home kiri bawah */
+.home-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #009688;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1500;
+}
+.home-button:hover {
+  background: #00796b;
+}
+
+    body {
+      margin: 0;
+      font-family: 'Comic Sans MS', sans-serif;
+      background: url("suasanasungai.jpg") no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      color: #fff;
+      text-shadow: 2px 2px 5px #000;
+      margin-top: 10px;
+    }
+
+    #instruksiBtn, #misiBtn {
+      position: absolute;
+      top: 15px;
+      background: #00c853;
+      color: #fff;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px #333;
+      transition: transform 0.2s;
+      z-index: 1001;
+    }
+
+    #instruksiBtn { left: 15px; }
+    #misiBtn { left: 190px; display: none; }
+
+    #instruksiBtn:hover, #misiBtn:hover {
+      transform: scale(1.1);
+    }
+
+    /* Popup Instruksi */
+    #instruksiPopup {
+      position: absolute;
+      top: 60px;
+      left: 15px;
+      background: rgba(0,0,0,0.9);
+      border-radius: 12px;
+      padding: 20px;
+      color: #fff;
+      font-size: 18px;
+      max-width: 350px;
+      line-height: 1.6;
+      display: none;
+      opacity: 0;
+      z-index: 2000;
+      transition: opacity 0.5s ease; /* animasi fade-in */
+    }
+
+    #instruksiPopup.show {
+      display: block;
+      opacity: 1;
+    }
+
+    #instruksiPopup h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #ffeb3b;
+    }
+
+    #instruksiPopup button {
+      margin-top: 15px;
+      background: #ff4444;
+      color: #fff;
+      padding: 6px 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #box-container {
+      position: relative;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    #controls {
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #ffcc00;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px #333;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+    }
+
+    #boxrakit {
+      width: 400px;
+      height: 250px;
+      border: 4px dashed #fff;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin: auto;
+      position: relative;
+    }
+
+    #boxlabel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 20px;
+      text-shadow: 1px 1px 2px #000;
+      pointer-events: none;
+    }
+
+    #inventory {
+      background: rgba(171, 217, 219, 0.641);
+      border-top: 5px solid #ffffff00;
+      padding: 15px;
+      display: grid;
+      grid-template-columns: repeat(6, 80px);
+      justify-content: center;
+      gap: 20px;
+      width: 50%;
+      box-shadow: 0 -5px 10px rgba(255, 255, 255, 0.518);
+    }
+
+    .item {
+      width: 70px;
+      height: 70px;
+      cursor: grab;
+      transition: transform 0.2s;
+    }
+
+    .item:hover {
+      transform: scale(1.2);
+    }
+
+    #popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: #fff;
+      font-size: 26px;
+      text-align: center;
+      padding: 20px;
+      z-index: 3000;
+    }
+
+    #popup img {
+      margin-top: 20px;
+      width: 350px;
+    }
+
+    #popup button {
+      margin-top: 20px;
+      background: #ff4444;
+      color: #fff;
+      padding: 8px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Game Perakitan Listrik</h1>
+
+  <!-- Tombol Instruksi -->
+  <button id="instruksiBtn" onclick="toggleInstruksi()">Instruksi Penggunaan</button>
+  <button class="home-button" onclick="window.location.href='index.html'">Home</button>
+
+  <!-- Popup Instruksi -->
+  <div id="instruksiPopup">
+    <h2>Instruksi Penggunaan</h2>
+    <ol>
+      <li>Pada bagian ini anda diminta untuk merakit alternatif penghasil listrik.</li>
+      <li>Ambil alat pada kotak inventori, masukkan kedalam box perakitan, jika alat sudah masuk tekan tombol RAKIT untuk membuat alat.</li>
+      <li>Ada 2 pembangkit listrik yang dapat anda rakit. Temukan dan ciptakan pembangkit listrik tersebut.</li>
+      <li>Selamat bersenang-senang.</li>
+    </ol>
+    <button onclick="closeInstruksi()">Tutup</button>
+  </div>
+  
+  <div id="box-container">
+    <div id="controls">
+      <button onclick="rakit()">Rakit</button>
+      <button onclick="resetGame()">Kosongkan</button>
+    </div>
+    <div id="boxrakit" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <div id="boxlabel">Box Perakitan</div>
+    </div>
+  </div>
+
+  <div id="inventory">
+    <img src="led.png" id="led" class="item" draggable="true" ondragstart="drag(event)">
+    <img src="baling.png" id="baling" class="item" draggable="true" ondragstart="drag(event)">
+    <img src="dinamo.png" id="dinamo" class="item" draggable="true" ondragstart="drag(event)">
+    <img src="sendok.png" id="sendok" class="item" draggable="true" ondragstart="drag(event)">
+    <img src="tutupbotol.png" id="tutupbotol" class="item" draggable="true" ondragstart="drag(event)">
+    <img src="kabellistrik1.png" id="kabellistrik1" class="item" draggable="true" ondragstart="drag(event)">
+  </div>
+
+  <div id="popup">
+    <p id="message"></p>
+    <img id="hasilimg" src="">
+    <button onclick="closePopup()">Tutup</button>
+  </div>
+
+  <script>
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+
+    function drag(ev) {
+      ev.dataTransfer.setData("id", ev.target.id);
+    }
+
+    function drop(ev) {
+      ev.preventDefault();
+      var data = ev.dataTransfer.getData("id");
+      var original = document.getElementById(data);
+
+      // Clone item dari inventori
+      var item = original.cloneNode(true);
+      item.removeAttribute("id");
+      item.setAttribute("draggable", "false");
+
+      // Klik item di box = hapus & kembalikan ke inventori
+      item.addEventListener("click", function() {
+        this.remove();
+        document.getElementById("inventory").appendChild(original);
+        updateBoxLabel();
+      });
+
+      ev.target.appendChild(item);
+
+      // Hapus sementara dari inventory agar tidak dobel
+      original.remove();
+
+      updateBoxLabel();
+    }
+
+    function updateBoxLabel() {
+      let box = document.getElementById("boxrakit");
+      let imgs = box.getElementsByTagName("img");
+      document.getElementById("boxlabel").style.display = imgs.length > 0 ? "none" : "block";
+    }
+
+    function getBoxItems() {
+      let box = document.getElementById("boxrakit");
+      let imgs = box.getElementsByTagName("img");
+      let items = [];
+      for (let img of imgs) {
+        items.push(img.src.split("/").pop());
+      }
+      return items;
+    }
+
+    function rakit() {
+      let items = getBoxItems();
+      let setAngin = ["led.png","baling.png","dinamo.png","kabellistrik1.png"];
+      let setAir   = ["led.png","dinamo.png","kabellistrik1.png","sendok.png","tutupbotol.png"];
+
+      if (setAngin.every(i => items.includes(i)) && items.length === setAngin.length) {
+        showPopup("Perakitan Listrik Tenaga ANGIN BERHASIL", "hasilangin.png");
+        document.getElementById("misiBtn").style.display = "inline-block";
+      } 
+      else if (setAir.every(i => items.includes(i)) && items.length === setAir.length) {
+        showPopup("Perakitan Listrik Tenaga AIR BERHASIL", "hasilair.png");
+        document.getElementById("misiBtn").style.display = "inline-block";
+      } 
+      else {
+        alert("Kombinasi belum benar! Coba lagi.");
+      }
+    }
+
+    function showPopup(message, imgsrc) {
+      document.getElementById("popup").style.display = "flex";
+      document.getElementById("message").innerText = message;
+      document.getElementById("hasilimg").src = imgsrc;
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+    }
+
+    function resetGame() {
+      location.reload();
+    }
+
+    function toggleInstruksi() {
+      let popup = document.getElementById("instruksiPopup");
+      popup.classList.toggle("show");
+    }
+
+    function closeInstruksi() {
+      document.getElementById("instruksiPopup").classList.remove("show");
+
+  </script>
+</body>
+</html>

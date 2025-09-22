@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi Workshop</title>
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background-image: url('bg-workshop.jpg');
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-family: Arial, sans-serif;
+        transition: opacity 1s ease;
+        opacity: 1;
+    }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,1);
+        transition: background-color 2s ease;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    #container {
+        display: flex;
+        gap: 50px;
+        align-items: center;
+        z-index: 3;
+        position: relative;
+    }
+
+    #stopkontak {
+        width: 150px;
+        cursor: grab;
+        transition: transform 0.5s ease;
+    }
+
+    #socket2 {
+        width: 160px;
+        height: 160px;
+        position: relative;
+    }
+
+    #socket2 img {
+        width: 160px;
+        height: 160px;
+        display: block;
+        z-index: 1;
+        position: relative;
+    }
+
+    #genset {
+        width: 350px;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        cursor: pointer;
+        z-index: 3;
+        transition: transform 0.2s;
+    }
+
+    #flash {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 350px;
+        height: 350px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,200,0.6) 0%, rgba(255,255,200,0) 70%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 2;
+    }
+
+    #instruction {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        background-color: rgba(0,0,0,0.6);
+        padding: 10px 15px;
+        border-radius: 5px;
+        z-index: 4;
+        font-size: 16px;
+    }
+
+    #menu {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0,0,0,0.8);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 10px;
+        font-size: 20px;
+        display: none;
+        z-index: 5;
+        cursor: pointer;
+        text-align: center;
+        transition: transform 0.3s, opacity 0.5s;
+    }
+
+    #menu:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+</style>
+</head>
+<body>
+<div id="overlay"></div>
+<div id="flash"></div>
+
+<div id="instruction">
+    Sambungkan Stop Kontak ke Socket Listrik, kemudian nyalakan genset
+</div>
+
+<div id="menu">Mulai Misi 1</div>
+
+<div id="container">
+    <img id="stopkontak" src="stopkontak.png" draggable="true" alt="Stopkontak">
+    <div id="socket2">
+        <img src="socket2.png" alt="Socket2">
+    </div>
+</div>
+
+<img id="genset" src="genset.png" alt="Genset">
+
+<audio id="gensetSound" src="genset-sound.mp3" preload="auto"></audio>
+
+<script>
+const stopkontak = document.getElementById('stopkontak');
+const socket2 = document.getElementById('socket2');
+const genset = document.getElementById('genset');
+const overlay = document.getElementById('overlay');
+const flash = document.getElementById('flash');
+const gensetSound = document.getElementById('gensetSound');
+const instruction = document.getElementById('instruction');
+const menu = document.getElementById('menu');
+let connected = false;
+
+// Drag & Drop stopkontak
+stopkontak.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text', 'stopkontak');
+});
+
+socket2.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+socket2.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData('text');
+    if (data === 'stopkontak') {
+        const socketRect = socket2.getBoundingClientRect();
+        const stopRect = stopkontak.getBoundingClientRect();
+
+        const offsetX = socketRect.left + socketRect.width/2 - (stopRect.left + stopRect.width/2);
+        const offsetY = socketRect.top + socketRect.height/2 - (stopRect.top + stopRect.height/2);
+
+        stopkontak.style.transition = 'transform 0.5s ease';
+        stopkontak.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+
+        setTimeout(() => {
+            stopkontak.style.position = 'absolute';
+            stopkontak.style.top = '50%';
+            stopkontak.style.left = '50%';
+            stopkontak.style.transform = 'translate(-50%, -50%)';
+            stopkontak.style.zIndex = 4;
+            connected = true;
+        }, 500);
+    }
+});
+
+// Tombol on/off genset
+genset.addEventListener('click', () => {
+    if (!connected) {
+        alert('Pindahkan stopkontak ke socket terlebih dahulu!');
+        return;
+    }
+
+    gensetSound.currentTime = 0;
+    gensetSound.play();
+
+    flash.style.opacity = 1;
+    setTimeout(() => { flash.style.opacity = 0; }, 300);
+
+    overlay.style.backgroundColor = 'rgba(0,0,0,0)';
+    stopkontak.style.display = 'none';
+    socket2.style.display = 'none';
+    instruction.style.display = 'none';
+    menu.style.display = 'block';
+});
+
+// Klik menu untuk pindah halaman dengan transisi
+menu.addEventListener('click', () => {
+    // Fade out body
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+        window.location.href = 'emptytoolbox.html';
+    }, 800); // sesuaikan durasi transisi
+});
+</script>
+</body>
+</html>
